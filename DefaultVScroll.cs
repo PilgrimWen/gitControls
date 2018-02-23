@@ -10,37 +10,35 @@ using System.Windows.Forms;
 
 namespace SalesCounter.src.custom.control
 {
-    class DefaultVScroll: UserControl
+     class DefaultVScroll : UserControl
     {
-        protected Color moChannelColor = Color.Empty;
-        protected Image moUpArrowImage = null;
-        //protected Image moUpArrowImage_Over = null;
-        //protected Image moUpArrowImage_Down = null;
-        protected Image moDownArrowImage = null;
-        //protected Image moDownArrowImage_Over = null;
-        //protected Image moDownArrowImage_Down = null;
-        protected Image moThumbArrowImage = null;
+        protected Color mChannelColor = Color.FromArgb(75, 85, 104);
+        protected Image mUpArrowImage = null;
 
-        protected int moLargeChange = 10;
-        protected int moSmallChange = 1;
-        protected int moMinimum = 0;
-        protected int moMaximum = 100;
-        protected int moValue = 0;
+        protected Image mDownArrowImage = null;
+
+        protected int mLargeChange = 1;
+        protected int mSmallChange = 1;
+        protected int mMinimum = 0;
+        protected int mMaximum = 100;
+        protected int mValue = 0;
+        protected int mThumbTop = 0;
+
         private int nClickPoint;
 
-        protected int moThumbTop = 0;
+        private int imgHeight = 0;
 
-        protected bool moAutoSize = false;
-
-        private bool moThumbDown = false;
-        private bool moThumbDragging = false;
+        private bool mThumbDown = false;
+        private bool mThumbDragging = false;
 
         public new event EventHandler Scroll = null;
         public event EventHandler ValueChanged = null;
-
+        //计算滑块高
         private int GetThumbHeight()
         {
-            int nTrackHeight = (this.Height - (UpArrowImage.Height + DownArrowImage.Height));
+            //高度
+            int nTrackHeight = (this.Height - (imgHeight + imgHeight));
+            //
             float fThumbHeight = ((float)LargeChange / (float)Maximum) * nTrackHeight;
             int nThumbHeight = (int)fThumbHeight;
 
@@ -49,12 +47,6 @@ namespace SalesCounter.src.custom.control
                 nThumbHeight = nTrackHeight;
                 fThumbHeight = nTrackHeight;
             }
-            if (nThumbHeight < 56)
-            {
-                nThumbHeight = 56;
-                fThumbHeight = 56;
-            }
-
             return nThumbHeight;
         }
 
@@ -66,33 +58,33 @@ namespace SalesCounter.src.custom.control
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             SetStyle(ControlStyles.DoubleBuffer, true);
 
-            moChannelColor = Color.FromArgb(75,85,104);
-            UpArrowImage = ResControl.uparrow;
-            DownArrowImage = ResControl.downarrow;
+            mChannelColor = Color.FromArgb(75, 85, 104);
+            UpArrowImage = Resource.up;
+            DownArrowImage = Resource.down;
+            imgHeight = 0;
 
-
-            this.Width = UpArrowImage.Width;
-            base.MinimumSize = new Size(UpArrowImage.Width, UpArrowImage.Height + DownArrowImage.Height + GetThumbHeight());
+            this.Width = 4;
+            base.MinimumSize = new Size(4, imgHeight + imgHeight + GetThumbHeight());
         }
 
-        [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Behavior"), Description("LargeChange")]
+        [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), Category("Behavior"), Description("LargeChange")]
         public int LargeChange
         {
-            get { return moLargeChange; }
+            get { return mLargeChange; }
             set
             {
-                moLargeChange = value;
+                mLargeChange = value;
                 Invalidate();
             }
         }
 
-        [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Behavior"), Description("SmallChange")]
+        [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), Category("Behavior"), Description("SmallChange")]
         public int SmallChange
         {
-            get { return moSmallChange; }
+            get { return mSmallChange; }
             set
             {
-                moSmallChange = value;
+                mSmallChange = value;
                 Invalidate();
             }
         }
@@ -100,10 +92,10 @@ namespace SalesCounter.src.custom.control
         [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Behavior"), Description("Minimum")]
         public int Minimum
         {
-            get { return moMinimum; }
+            get { return mMinimum; }
             set
             {
-                moMinimum = value;
+                mMinimum = value;
                 Invalidate();
             }
         }
@@ -111,10 +103,10 @@ namespace SalesCounter.src.custom.control
         [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Behavior"), Description("Maximum")]
         public int Maximum
         {
-            get { return moMaximum; }
+            get { return mMaximum; }
             set
             {
-                moMaximum = value;
+                mMaximum = value;
                 Invalidate();
             }
         }
@@ -122,17 +114,21 @@ namespace SalesCounter.src.custom.control
         [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Behavior"), Description("Value")]
         public int Value
         {
-            get { return moValue; }
+            get { return mValue; }
             set
             {
                 if (value < 0)
                     value = 0;
                 if (value > Maximum)
                     value = Maximum;
-                moValue = value;
+                if(mValue==value)
+                {
+                    return;
+                }
+                mValue = value;
 
-                int nTrackHeight = (this.Height - (UpArrowImage.Height + DownArrowImage.Height));
-                float fThumbHeight = ((float)LargeChange / (float)Maximum) * nTrackHeight;
+                int nTrackHeight = (this.Height - (imgHeight + imgHeight));
+                float fThumbHeight = ((float)LargeChange / ((float)Maximum+1)) * nTrackHeight;
                 int nThumbHeight = (int)fThumbHeight;
 
                 //if (nThumbHeight > nTrackHeight)
@@ -152,62 +148,62 @@ namespace SalesCounter.src.custom.control
                 float fPerc = 0.0f;
                 if (nRealRange != 0)
                 {
-                    fPerc = (float)moValue / (float)nRealRange;
+                    fPerc = (float)mValue / (float)nRealRange;
 
                 }
                 float fTop = fPerc * nPixelRange;
-                moThumbTop = (int)fTop;
-                if(this.ValueChanged!=null)
-                    this.ValueChanged(this,new EventArgs());
+                mThumbTop = (int)fTop;
+                if (ValueChanged != null)
+                    ValueChanged(this, new EventArgs());
                 Invalidate();
             }
         }
 
-        [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Skin"), Description("Channel Color")]
+        [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), Category("Skin"), Description("Channel Color")]
         public Color ChannelColor
         {
-            get { return moChannelColor; }
-            set { moChannelColor = value; }
+            get { return mChannelColor; }
+            set { mChannelColor = value; }
         }
 
         [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Skin"), Description("Up Arrow Graphic")]
         public Image UpArrowImage
         {
-            get { return moUpArrowImage; }
-            set { moUpArrowImage = value; }
+            get { return mUpArrowImage; }
+            set { mUpArrowImage = value; }
         }
 
         [EditorBrowsable(EditorBrowsableState.Always), Browsable(true), DefaultValue(false), Category("Skin"), Description("Up Arrow Graphic")]
         public Image DownArrowImage
         {
-            get { return moDownArrowImage; }
-            set { moDownArrowImage = value; }
+            get { return mDownArrowImage; }
+            set { mDownArrowImage = value; }
         }
 
 
         protected override void OnPaint(PaintEventArgs e)
         {
-
+            
             e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
 
             if (UpArrowImage != null)
             {
-                e.Graphics.DrawImage(UpArrowImage, new Rectangle(new Point(0, 0), new Size(this.Width, UpArrowImage.Height)));
+                e.Graphics.DrawImage(UpArrowImage, new Rectangle(new Point(0, 0), new Size(this.Width, imgHeight)));
             }
 
-            Brush oBrush = new SolidBrush(moChannelColor);
-            Brush oBorderBrush = new SolidBrush(Color.FromArgb(75, 85, 104));
+            Brush brush = new SolidBrush(mChannelColor);
+            Brush borderBrush = new SolidBrush(Color.FromArgb(75, 85, 104));
 
             //draw channel left and right border colors
-            e.Graphics.FillRectangle(oBorderBrush, new Rectangle(0, UpArrowImage.Height, 1, (this.Height - DownArrowImage.Height)));
-            e.Graphics.FillRectangle(oBorderBrush, new Rectangle(this.Width - 1, UpArrowImage.Height, 1, (this.Height - DownArrowImage.Height)));
+            e.Graphics.FillRectangle(borderBrush, new Rectangle(0, imgHeight, 1, (this.Height - imgHeight)));
+            e.Graphics.FillRectangle(borderBrush, new Rectangle(this.Width - 1, imgHeight, 1, (this.Height - imgHeight)));
 
             //draw channel
-            e.Graphics.FillRectangle(oBrush, new Rectangle(1, UpArrowImage.Height, this.Width - 2, (this.Height - DownArrowImage.Height)));
+            e.Graphics.FillRectangle(brush, new Rectangle(1, imgHeight, this.Width - 2, (this.Height - imgHeight)));
 
             //draw thumb
-            int nTrackHeight = (this.Height - (UpArrowImage.Height + DownArrowImage.Height));
-            float fThumbHeight = ((float)LargeChange / (float)Maximum) * nTrackHeight;
+            int nTrackHeight = (this.Height - (imgHeight + imgHeight));
+            float fThumbHeight = ((float)LargeChange / ((float)Maximum + 1)) * nTrackHeight;
             int nThumbHeight = (int)fThumbHeight;
 
             if (nThumbHeight > nTrackHeight)
@@ -215,216 +211,157 @@ namespace SalesCounter.src.custom.control
                 nThumbHeight = nTrackHeight;
                 fThumbHeight = nTrackHeight;
             }
-            //if (nThumbHeight < 10)
-            //{
-            //    nThumbHeight = 10;
-            //    fThumbHeight = 10;
-            //}
-            int nTop = moThumbTop;
-            nTop += UpArrowImage.Height;
 
-            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(154, 154, 166)),new Rectangle(1, nTop, this.Width - 2, nThumbHeight));
+            int nTop = mThumbTop;
+            nTop += imgHeight;
 
-            //nTop += ThumbMiddleImage.Height;
+            e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(154, 154, 166)), new Rectangle(1, nTop, this.Width - 2, nThumbHeight));
+
+
             if (DownArrowImage != null)
             {
-                e.Graphics.DrawImage(DownArrowImage, new Rectangle(new Point(0, (this.Height - DownArrowImage.Height)), new Size(this.Width, DownArrowImage.Height)));
+                e.Graphics.DrawImage(DownArrowImage, new Rectangle(new Point(0, (this.Height - imgHeight)), new Size(this.Width, imgHeight)));
             }
 
-        }
-
-        public override bool AutoSize
-        {
-            get
-            {
-                return base.AutoSize;
-            }
-            set
-            {
-                base.AutoSize = value;
-                if (base.AutoSize)
-                {
-                    this.Width = moUpArrowImage.Width;
-                }
-            }
         }
 
         private void InitializeComponent()
         {
             this.SuspendLayout();
-            // 
-            // CustomScrollbar
-            // 
-            this.Name = "CustomScrollbar";
-            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.CustomScrollbar_MouseDown);
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.CustomScrollbar_MouseMove);
-            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.CustomScrollbar_MouseUp);
+
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Scrollbar_MouseDown);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Scrollbar_MouseMove);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Scrollbar_MouseUp);
+            this.MouseClick += new MouseEventHandler(this.Scrollbar_Click);
+
             this.ResumeLayout(false);
+        }
+
+        private void Scrollbar_Click(object sender, MouseEventArgs e)
+        {
+
+            Rectangle rec;
+            if (this.UpArrowImage != null)
+            {
+                rec = new Rectangle(0, this.imgHeight, Width, this.Height - (imgHeight + imgHeight));
+            }
+            else
+                rec = new Rectangle(0, 0, Width, Height);
+            if (!rec.Contains(new Point(e.X, e.Y)))
+            {return; }
+            if (this.mThumbDown)
+                return;
+            else if(e.Y<mThumbTop)
+                Value -= this.LargeChange;
+            else
+            {
+                Value += this.LargeChange;
+            }
 
         }
 
-        private void CustomScrollbar_MouseDown(object sender, MouseEventArgs e)
+        private void Scrollbar_MouseDown(object sender, MouseEventArgs e)
         {
             Point ptPoint = this.PointToClient(Cursor.Position);
-            int nTrackHeight = (this.Height - (UpArrowImage.Height + DownArrowImage.Height));
+            int nTrackHeight = (this.Height - (imgHeight + imgHeight));
             float fThumbHeight = ((float)LargeChange / (float)Maximum) * nTrackHeight;
             int nThumbHeight = (int)fThumbHeight;
 
-            int nTop = moThumbTop;
-            nTop += UpArrowImage.Height;
+            int nTop = mThumbTop;
+            nTop += imgHeight;
 
-
+            //滑块
             Rectangle thumbrect = new Rectangle(new Point(1, nTop), new Size(this.Width, nThumbHeight));
             if (thumbrect.Contains(ptPoint))
             {
-
                 //hit the thumb
                 nClickPoint = (ptPoint.Y - nTop);
-                //MessageBox.Show(Convert.ToString((ptPoint.Y - nTop)));
-                this.moThumbDown = true;
+                this.mThumbDown = true;
             }
 
-            Rectangle uparrowrect = new Rectangle(new Point(1, 0), new Size(UpArrowImage.Width, UpArrowImage.Height));
+            Rectangle uparrowrect = new Rectangle(new Point(1, 0), new Size(UpArrowImage.Width, imgHeight));
             if (uparrowrect.Contains(ptPoint))
             {
 
-                int nRealRange = (Maximum - Minimum);
-                int nPixelRange = (nTrackHeight - nThumbHeight);
-                if (nRealRange > 0)
-                {
-                    if (nPixelRange > 0)
-                    {
-                        if ((moThumbTop - SmallChange) < 0)
-                            moThumbTop = 0;
-                        else
-                            moThumbTop -= SmallChange;
-
-                        //figure out value
-                        float fPerc = (float)moThumbTop / (float)nPixelRange;
-                        float fValue = fPerc * (Maximum);
-
-                        moValue = (int)fValue;
-
-                        if (ValueChanged != null)
-                            ValueChanged(this, new EventArgs());
-
-                        if (Scroll != null)
-                            Scroll(this, new EventArgs());
-
-                        Invalidate();
-                    }
-                }
+                Value -= SmallChange;
             }
 
-            Rectangle downarrowrect = new Rectangle(new Point(1, UpArrowImage.Height + nTrackHeight), new Size(UpArrowImage.Width, UpArrowImage.Height));
+            Rectangle downarrowrect = new Rectangle(new Point(1, imgHeight + nTrackHeight), new Size(UpArrowImage.Width, imgHeight));
             if (downarrowrect.Contains(ptPoint))
             {
-                int nRealRange = (Maximum - Minimum);
-                int nPixelRange = (nTrackHeight - nThumbHeight);
-                if (nRealRange > 0)
-                {
-                    if (nPixelRange > 0)
-                    {
-                        if ((moThumbTop + SmallChange) > nPixelRange)
-                            moThumbTop = nPixelRange;
-                        else
-                            moThumbTop += SmallChange;
-
-                        //figure out value
-                        float fPerc = (float)moThumbTop / (float)nPixelRange;
-                        float fValue = fPerc * (Maximum - LargeChange);
-
-                        moValue = (int)fValue;
-
-                        if (ValueChanged != null)
-                            ValueChanged(this, new EventArgs());
-
-                        if (Scroll != null)
-                            Scroll(this, new EventArgs());
-
-                        Invalidate();
-                    }
-                }
+                Value += SmallChange;
             }
         }
 
-        private void CustomScrollbar_MouseUp(object sender, MouseEventArgs e)
+        private void Scrollbar_MouseUp(object sender, MouseEventArgs e)
         {
-            this.moThumbDown = false;
-            this.moThumbDragging = false;
+            this.mThumbDown = false;
+            this.mThumbDragging = false;
         }
-
-        private void MoveThumb(int y)
+        private void Scrollbar_MouseMove(object sender, MouseEventArgs e)
         {
-            int nRealRange = Maximum - Minimum;
-            int nTrackHeight = (this.Height - (UpArrowImage.Height + DownArrowImage.Height));
-            float fThumbHeight = ((float)LargeChange / (float)Maximum) * nTrackHeight;
-            int nThumbHeight = (int)fThumbHeight;
-
-            //if (nThumbHeight > nTrackHeight)
-            //{
-            //    nThumbHeight = nTrackHeight;
-            //    fThumbHeight = nTrackHeight;
-            //}
-            //if (nThumbHeight < 10)
-            //{
-            //    nThumbHeight = 10;
-            //    fThumbHeight = 10;
-            //}
-
-            int nSpot = nClickPoint;
-
-            int nPixelRange = (nTrackHeight - nThumbHeight);
-            if (moThumbDown && nRealRange > 0)
+            if (mThumbDown == true)
             {
-                if (nPixelRange > 0)
-                {
-                    int nNewThumbTop = y - (UpArrowImage.Height + nSpot);
-
-                    if (nNewThumbTop < 0)
-                    {
-                        moThumbTop = nNewThumbTop = 0;
-                    }
-                    else if (nNewThumbTop > nPixelRange)
-                    {
-                        moThumbTop = nNewThumbTop = nPixelRange;
-                    }
-                    else
-                    {
-                        moThumbTop = y - (UpArrowImage.Height + nSpot);
-                    }
-
-                    //figure out value
-                    float fPerc = (float)moThumbTop / (float)nPixelRange;
-                    float fValue = fPerc * (Maximum);
-                    moValue = (int)fValue;
-                    Debug.WriteLine(moValue.ToString());
-
-                    Application.DoEvents();
-
-                    Invalidate();
-                }
-            }
-        }
-
-        private void CustomScrollbar_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (moThumbDown == true)
-            {
-                this.moThumbDragging = true;
+                this.mThumbDragging = true;
             }
 
-            if (this.moThumbDragging)
+            if (this.mThumbDragging)
             {
 
                 MoveThumb(e.Y);
             }
 
-            if (ValueChanged != null)
-                ValueChanged(this, new EventArgs());
-
             if (Scroll != null)
                 Scroll(this, new EventArgs());
+        }
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            if(!this.Visible)
+            { return; }
+            base.OnMouseWheel(e);
+            Value += e.Delta / (-120)*LargeChange;
+        }
+        private void MoveThumb(int y)
+        {
+            int nRealRange = Maximum - Minimum;
+            int nTrackHeight = (this.Height - (imgHeight + imgHeight));
+            float fThumbHeight = ((float)LargeChange / (float)Maximum) * nTrackHeight;
+            int nThumbHeight = (int)fThumbHeight;
+
+            int nSpot = nClickPoint;
+
+            int nPixelRange = (nTrackHeight - nThumbHeight);
+            if (mThumbDown && nRealRange > 0 && nPixelRange > 0)
+            {
+
+                int nNewThumbTop = y - (imgHeight + nSpot);
+
+                if (nNewThumbTop < 0)
+                {
+                    nNewThumbTop = 0;
+                }
+                else if (nNewThumbTop > nPixelRange)
+                {
+                    nNewThumbTop = nPixelRange;
+                }
+                else
+                {
+                   
+                }
+
+                mThumbTop = nNewThumbTop;
+                
+                
+                //figure out value
+                float fPerc = (float)mThumbTop / (float)nPixelRange;
+                float fValue = fPerc * (Maximum);
+                Value = (int)fValue + 1;
+
+                Application.DoEvents();
+
+                Invalidate();
+
+            }
         }
     }
 }
